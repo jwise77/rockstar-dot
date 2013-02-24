@@ -88,4 +88,4 @@ for i in range(len(auniq)):
                       label = "z=%0.3f" % (redshift))
     subgs[i].add_node(node)
 
-graph.write("test.pdf", format="pdf")
+graph.write("mt-halo%d.pdf" % halo_id, format="pdf")
