@@ -1,0 +1,24 @@
+This script uses Graphviz to visualize a merger tree, using the output
+from consistent-trees (https://code.google.com/p/consistent-trees/).
+To run, enter
+
+python rockstar_dot.py <tree_data> <halo_id>
+
+where <tree_dat> is the output from consistent_trees that is usually
+named tree_0_0_0.dat and <halo_id> is the halo ID at the latest
+redshift.  A list of halos that is sorted by mass with their IDs can
+be found in rockstar_halos/hlists/ after running
+
+perl halo_trees_to_catalog.pl myconfig.cfg
+
+(see the README in consistent_trees for more information).
+
+Legend:
+1. The red arrows in the graph show the most massive progenitor of a
+   particular halo.
+2. The grey boxes show the global most massive progenitor.
+3. The blue filled boxes show major mergers of that global most
+   massive progenitor.
+4. The blue outlined boxes show any other major mergers.
+5. The number below the halo ID is the virial mass in units of Msun
+   (no inverse h!).
