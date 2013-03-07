@@ -15,6 +15,17 @@ lines = open(fname, "r").readlines()
 
 # Search for tree
 start_line = None
+rank = -halo_id
+num = 0
+if halo_id <= 0:
+    for l in lines:
+        if l.startswith("#tree"):
+            if num == -halo_id:
+                halo_id = int(l.split()[1])
+                break
+            num += 1
+    print "Halo %d (by mass) has ID %d" % (rank, halo_id)
+
 header = "#tree %d\n" % halo_id
 for i,l in enumerate(lines):
     if l.startswith("#Omega_M"):
