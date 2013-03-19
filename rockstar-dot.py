@@ -6,6 +6,8 @@ if len(sys.argv) < 3:
     print "usage: %s tree_file halo_id" % sys.argv[0]
     sys.exit()
 
+min_mass = 1e5
+
 halo_id = int(sys.argv[-1])
 fname = sys.argv[-2]
 if not os.path.exists(fname):
@@ -63,6 +65,8 @@ for i in range(nleaves):
     mmp = int(data[i,14]) == 1
     hid = int(data[i,1])
     desc = int(data[i,3])
+    mass = data[i,9]*h
+    if mass < min_mass: continue
     color = "red" if mmp else "black"
     lvl = na.where(na.abs((data[i,0] - auniq)/data[i,0]) < aeps)[0][0]
     next_lvl = na.where(na.abs((data[i,2] - auniq)/data[i,0]) < aeps)[0]
@@ -84,7 +88,7 @@ for i in range(nleaves):
         if major_merger:
             color = "lightblue"
     style = "filled" if hid == global_mmp else "solid"
-    label = "Halo %d\\n%.3g" % (int(data[i,1]), data[i,9]*h)
+    label = "Halo %d\\n%.3g" % (int(data[i,1]), mass)
     node = pydot.Node(halo_str, label=label, style=style, shape=halo_shape, color=color)
     graph.add_node(node)
     # Add this node to the correct level subgraph
