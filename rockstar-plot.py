@@ -8,6 +8,12 @@ if len(sys.argv) < 3:
 
 halo_id = int(sys.argv[-1])
 fname = sys.argv[-2]
+follow_mmp = False
+follow_early = True
+
+if follow_mmp and follow_early:
+    print "follow_mmp and follow_early can't both be true.  Setting follow_early False."
+    follow_early = False
 
 def load_pfs(fn):
     pf_store = os.path.dirname(fn) + "/../pfs.txt"
@@ -101,10 +107,30 @@ def find_mmp(data, zz, pfs, hid):
             result[zz['index'][pos]] = get_halo_prop(data, pf, hid, i)
     return result
 
+def follow_early_prog(data, zz, pfs, hid):
+    result = {}
+    start_max_z = data[:,0].argmin()
+    # Follow the descendants of the most massive halo at the maximum redshift.
+    i = data[start_max_z:,9].argmax() + start_max_z
+    desc = int(data[i,1])
+    eps = 1e-3
+    ids = data[:,1].astype('int64')
+    while desc >= 0:
+        i = na.where(desc == ids)[0][0]
+        a = data[i,0]
+        pos = na.where(na.abs(a - zz['scale'])/a < eps)[0][0]
+        pf = pfs[zz['index'][pos]]
+        result[zz['index'][pos]] = get_halo_prop(data, pf, hid, i)
+        desc = int(data[i,3])
+    return result
+
 halo_id, data = load_tree(halo_id, fname)
 pfs = load_pfs(fname)
 zz = load_redshifts(pfs)
-mmp = find_mmp(data, zz, pfs, halo_id)
+if follow_early:
+    mmp = follow_early_prog(data, zz, pfs, halo_id)
+if follow_mmp:
+    mmp = find_mmp(data, zz, pfs, halo_id)
 
 # plot histories
 import matplotlib.pyplot as plt
