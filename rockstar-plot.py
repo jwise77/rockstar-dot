@@ -8,8 +8,9 @@ if len(sys.argv) < 3:
 
 halo_id = int(sys.argv[-1])
 fname = sys.argv[-2]
-follow_mmp = False
-follow_early = True
+follow_mmp = True
+follow_early = False
+min_mass = 1e5
 
 if follow_mmp and follow_early:
     print "follow_mmp and follow_early can't both be true.  Setting follow_early False."
@@ -90,7 +91,7 @@ def find_mmp(data, zz, pfs, hid):
     result = {}
     nleaves = data.shape[0]
     global_mmp = hid
-    eps = 1e-3
+    eps = 5e-3
     for i in range(nleaves):
         mmp = int(data[i,14]) == 1
         hid = int(data[i,1])
@@ -104,16 +105,20 @@ def find_mmp(data, zz, pfs, hid):
             # Find matching scale factor and output
             pos = na.where(na.abs(a - zz['scale'])/a < eps)[0][0]
             pf = pfs[zz['index'][pos]]
-            result[zz['index'][pos]] = get_halo_prop(data, pf, hid, i)
+            if data[i,9] * pf.hubble_constant > min_mass:
+                result[zz['index'][pos]] = get_halo_prop(data, pf, hid, i)
+            else:
+                break
     return result
 
 def follow_early_prog(data, zz, pfs, hid):
     result = {}
-    start_max_z = data[:,0].argmin()
+    mass_filter = na.where(data[:,9] > min_mass)[0].max() + 1
+    start_max_z = data[:mass_filter,0].argmin()
     # Follow the descendants of the most massive halo at the maximum redshift.
     i = data[start_max_z:,9].argmax() + start_max_z
     desc = int(data[i,1])
-    eps = 1e-3
+    eps = 5e-3
     ids = data[:,1].astype('int64')
     while desc >= 0:
         i = na.where(desc == ids)[0][0]
@@ -144,16 +149,16 @@ for i,k in enumerate(mmp.keys()):
 plt.plot(a,m)
 plt.savefig('HaloMassHistory-%d.png' % halo_id)
 
-# Find max FOV (5*rvir)
+# Find max FOV (15*rvir)
 fov = 0.0
 for k,v in mmp.items():
-    fov = max(fov, 5*v['rvir'])
+    fov = max(fov, 15*v['rvir'])
 
 # plot projections
 for i,k in enumerate(mmp.keys()):
     pos = na.where(zz['index'] == k)[0][0]
     z = zz['redshift'][pos]
-    p = ProjectionPlot(pfs[pos], 'x', 'Density', center = mmp[pos]['pos'],
+    p = ProjectionPlot(pfs[pos], 'x', 'dm_density', center = mmp[pos]['pos'],
                        width = (fov, '1'))
     p.annotate_sphere(mmp[pos]['pos'], mmp[pos]['rvir'])
     p.annotate_point(mmp[pos]['pos']+0.51*fov,"z = %.2f" % (1.0/a[i]-1), 
