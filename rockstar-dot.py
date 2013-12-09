@@ -65,7 +65,8 @@ for i in range(nleaves):
     mmp = int(data[i,14]) == 1
     hid = int(data[i,1])
     desc = int(data[i,3])
-    mass = data[i,9]*h
+    # The actual mass is (mass [Msun/h]) = mass/h [Msun]
+    mass = data[i,9]/h
     if mass < min_mass: continue
     color = "red" if mmp else "black"
     lvl = na.where(na.abs((data[i,0] - auniq)/data[i,0]) < aeps)[0][0]
