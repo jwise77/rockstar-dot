@@ -1,13 +1,15 @@
-import os, sys
+import yt
+import os, sys, glob
 import numpy as np
 
 class consistent_trees():
-    def __init__(self, tree_file):
+    def __init__(self, tree_file="./rockstar_halos/trees/tree_0_0_0.dat"):
         if not os.path.exists(tree_file):
             raise RuntimeError("Tree file not found: %s" % (tree_file))
         self.tree_file = tree_file
         self.tree_dir = os.path.dirname(self.tree_file)
         self.rs_dir = os.path.dirname(self.tree_dir)
+        self.sim_dir = os.path.dirname(self.rs_dir)
         self.halo_id = None
         lfn = os.path.join(self.tree_dir, "locations.dat")
         # Load tree locations in the file
@@ -41,6 +43,33 @@ class consistent_trees():
         # Load scale factors of the outputs
         fn = os.path.join(os.path.join(self.rs_dir, "outputs"), "scales.txt")
         self.scale_factors = np.loadtxt(fn)
+        self.find_enzo_outputs()
+        return
+
+    def find_enzo_outputs(self, bases=None, eps=1e-4):
+        # Setup a dict with the rockstar output numbers as the keys
+        # and the enzo parameter filenames as the values.
+        self.enzo_fn = {}
+        _bases = [["DD", "output_"],
+                  ["DD", "data"],
+                  ["DD", "DD"],
+                  ["RD", "RedshiftOutput"],
+                  ["RS", "restart"]]
+        if bases != None:
+            bases = bases + _bases
+        else:
+            bases = _bases
+        all_files = []
+        for b in bases:
+            all_files += glob.glob("%s/%s????/%s????" % (self.sim_dir, b[0], b[1]))
+        for f in all_files:
+            ds = yt.load(f)
+            scale = 1.0 / (ds.current_redshift+1)
+            dela = abs(scale - self.scale_factors[:,1])
+            mina = dela.argmin()
+            num = int(self.scale_factors[mina,0])
+            if dela[mina] < eps:
+                self.enzo_fn[num] = f
         return
     
     def line_to_halo(self, line):
@@ -116,6 +145,12 @@ class consistent_trees():
                 halos.append(self.line_to_halo(l))
         return halos
 
+    def get_enzo_fn(self, scale, eps=1e-5):
+        dela = np.abs(scale - self.scale_factors[:,1])
+        mina = dela.argmin()
+        num = int(self.scale_factors[mina,0])
+        return self.enzo_fn[num]
+    
     def get_progenitors(self, num=None, z=None, a=None, eps=1e-5):
         self.check_halo_set()
         if num == None and z == None and a == None:
