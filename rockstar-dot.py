@@ -6,7 +6,7 @@ if len(sys.argv) < 3:
     print "usage: %s tree_file halo_id" % sys.argv[0]
     sys.exit()
 
-min_mass = 1e5
+min_mass = 2e4
 
 halo_id = int(sys.argv[-1])
 fname = sys.argv[-2]
@@ -61,12 +61,13 @@ for a in auniq:
 
 aeps = 1e-6
 global_mmp = halo_id
+np = 0
 for i in range(nleaves):
     mmp = int(data[i,14]) == 1
     hid = int(data[i,1])
     desc = int(data[i,3])
     # The actual mass is (mass [Msun/h]) = mass/h [Msun]
-    mass = data[i,9]/h
+    mass = data[i,10]/h
     if mass < min_mass: continue
     color = "red" if mmp else "black"
     lvl = na.where(na.abs((data[i,0] - auniq)/data[i,0]) < aeps)[0][0]
@@ -84,7 +85,7 @@ for i in range(nleaves):
     all_desc = na.where(data[:,3].astype('int64') == hid)[0]
     color = "grey"
     if all_desc.size > 0:
-        major_merger = na.any(na.logical_and(data[all_desc,9] > 0.3*data[i,9],  # Mass ratio > 0.3
+        major_merger = na.any(na.logical_and(data[all_desc,10] > 0.3*data[i,10],  # Mass ratio > 0.3
                                              data[all_desc,14] < 1))
         if major_merger:
             color = "lightblue"
@@ -94,8 +95,10 @@ for i in range(nleaves):
     graph.add_node(node)
     # Add this node to the correct level subgraph
     subgs[lvl].add_node(pydot.Node(halo_str))
+    np += 1
 
 # Add subgraphs
+print "Plotting %d of %d halos" % (np, nleaves)
 for i in range(len(auniq)):
     # If there are no halos at this redshift, don't add the subgraph
     if len(subgs[i].get_node_list()) == 0: continue
