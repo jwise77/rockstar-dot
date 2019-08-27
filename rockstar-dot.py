@@ -1,17 +1,17 @@
 import os, sys
 import pydot
-import numpy as na
+import numpy as np
 
 if len(sys.argv) < 3:
-    print "usage: %s tree_file halo_id" % sys.argv[0]
+    print ("usage: %s tree_file halo_id" % sys.argv[0])
     sys.exit()
 
-min_mass = 1e5
+min_mass = 1e4
 
 halo_id = int(sys.argv[-1])
 fname = sys.argv[-2]
 if not os.path.exists(fname):
-    print "Cannot find %s" % fname
+    print ("Cannot find %s" % fname)
     sys.exit()
 lines = open(fname, "r").readlines()
 
@@ -26,7 +26,7 @@ if halo_id <= 0:
                 halo_id = int(l.split()[1])
                 break
             num += 1
-    print "Halo %d (by mass) has ID %d" % (rank, halo_id)
+    print ("Halo %d (by mass) has ID %d" % (rank, halo_id))
 
 header = "#tree %d\n" % halo_id
 for i,l in enumerate(lines):
@@ -41,9 +41,9 @@ for i,l in enumerate(lines):
 # Load data from strings
 nleaves = end_line - start_line
 nfields = len(lines[start_line].split())
-data = na.empty((nleaves, nfields))
+data = np.empty((nleaves, nfields))
 for i in range(start_line, end_line):
-    data[i-start_line,:] = map(float, lines[i].split())
+    data[i-start_line,:] = np.array(lines[i].split(), dtype='float')
 del lines
 
 # Create the pydot graph object
@@ -52,7 +52,7 @@ halo_shape = "rect"
 z_shape = "plaintext"
 
 # Get scale factors and make subgrids to align the halos in a given output
-auniq = na.unique(data[:,0])
+auniq = np.unique(data[:,0])
 auniq.sort()
 subgs = []
 for a in auniq:
@@ -66,11 +66,11 @@ for i in range(nleaves):
     hid = int(data[i,1])
     desc = int(data[i,3])
     # The actual mass is (mass [Msun/h]) = mass/h [Msun]
-    mass = data[i,9]/h
+    mass = data[i,10]/h
     if mass < min_mass: continue
     color = "red" if mmp else "black"
-    lvl = na.where(na.abs((data[i,0] - auniq)/data[i,0]) < aeps)[0][0]
-    next_lvl = na.where(na.abs((data[i,2] - auniq)/data[i,0]) < aeps)[0]
+    lvl = np.where(np.abs((data[i,0] - auniq)/data[i,0]) < aeps)[0][0]
+    next_lvl = np.where(np.abs((data[i,2] - auniq)/data[i,0]) < aeps)[0]
 
     halo_str = "C%d_H%d" % (lvl, hid)
     # Don't do this for halos without a descendant (usually the last redshift)
@@ -81,10 +81,10 @@ for i in range(nleaves):
 
     if desc == global_mmp and mmp:
         global_mmp = hid
-    all_desc = na.where(data[:,3].astype('int64') == hid)[0]
+    all_desc = np.where(data[:,3].astype('int64') == hid)[0]
     color = "grey"
     if all_desc.size > 0:
-        major_merger = na.any(na.logical_and(data[all_desc,9] > 0.3*data[i,9],  # Mass ratio > 0.3
+        major_merger = np.any(np.logical_and(data[all_desc,10] > 0.3*data[i,10],  # Mass ratio > 0.3
                                              data[all_desc,14] < 1))
         if major_merger:
             color = "lightblue"
