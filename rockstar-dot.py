@@ -98,7 +98,7 @@ for i in range(nleaves):
     nump += 1
 
 # Add subgraphs
-print "Plotting %d of %d halos" % (nump, nleaves)
+print ("Plotting %d of %d halos" % (nump, nleaves))
 for i in range(len(auniq)):
     # If there are no halos at this redshift, don't add the subgraph
     if len(subgs[i].get_node_list()) == 0: continue
